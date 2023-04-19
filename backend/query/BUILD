@@ -212,6 +212,7 @@ cc_binary(
         ":info_schema_columns_metadata_for_index.csv",
     ],
     deps = [
+        "@bazel_tools//tools/cpp/runfiles",
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/strings",
         "@com_google_zetasql//zetasql/base",

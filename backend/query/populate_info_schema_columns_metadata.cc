@@ -24,7 +24,9 @@
 #include "riegeli/bytes/cfile_reader.h"
 #include "riegeli/csv/csv_reader.h"
 #include "riegeli/csv/csv_record.h"
+#include "tools/cpp/runfiles/runfiles.h"
 
+using bazel::tools::cpp::runfiles::Runfiles;
 using ::riegeli::CsvReader;
 using ::riegeli::CsvReaderBase;
 using ::riegeli::CsvRecord;
@@ -32,7 +34,7 @@ using ::riegeli::CFileReader;
 
 static constexpr char kCsvSeparator = ',';
 
-std::string PopulateInfoSchemaColumnsMetadata() {
+std::string PopulateInfoSchemaColumnsMetadata(const Runfiles& runfiles) {
   std::string metadata_code =
       R"(struct ColumnsMetaEntry {
   const char* table_name;
@@ -48,8 +50,8 @@ inline const std::vector<ColumnsMetaEntry>& ColumnsMetadata() {
 )";
 
   // clang-format off
-  constexpr absl::string_view kInfoSchemaColumnsMetadata =
-      "backend/query/info_schema_columns_metadata.csv"; // NOLINT
+  const std::string kInfoSchemaColumnsMetadata = runfiles.Rlocation(
+    "com_google_cloud_spanner_emulator/backend/query/info_schema_columns_metadata.csv"); // NOLINT
   // clang-format on
   CsvReaderBase::Options options;
   options.set_field_separator(kCsvSeparator);
@@ -79,7 +81,7 @@ inline const std::vector<ColumnsMetaEntry>& ColumnsMetadata() {
   return metadata_code;
 }
 
-std::string PopulateInfoSchemaColumnsMetadataForIndex() {
+std::string PopulateInfoSchemaColumnsMetadataForIndex(const Runfiles& runfiles) {
   std::string metadata_for_index_code =
       R"(struct IndexColumnsMetaEntry {
   const char* table_name;
@@ -97,8 +99,8 @@ inline const std::vector<IndexColumnsMetaEntry>& IndexColumnsMetadata() {
 )";
 
   // clang-format off
-  constexpr absl::string_view kInfoSchemaColumnsMetadataForIndex =
-      "backend/query/info_schema_columns_metadata_for_index.csv"; // NOLINT
+  const std::string kInfoSchemaColumnsMetadataForIndex = runfiles.Rlocation(
+    "com_google_cloud_spanner_emulator/backend/query/info_schema_columns_metadata_for_index.csv"); // NOLINT
   // clang-format on
   CsvReaderBase::Options options;
   options.set_field_separator(kCsvSeparator);
@@ -139,6 +141,10 @@ inline const std::vector<IndexColumnsMetaEntry>& IndexColumnsMetadata() {
 
 int main(int argc, char* argv[]) {
   absl::ParseCommandLine(argc, argv);
+  std::string error;
+  std::unique_ptr<const Runfiles> runfiles(Runfiles::Create(argv[0], &error));
+
+  ZETASQL_CHECK(runfiles != nullptr) << error;
 
   constexpr absl::string_view kTemplate =
       R"(#ifndef $0
@@ -166,8 +172,8 @@ $2
   std::cout << absl::Substitute(
       kTemplate,
       "THIRD_PARTY_CLOUD_SPANNER_EMULATOR_BACKEND_QUERY_INFO_SCHEMA_",
-      PopulateInfoSchemaColumnsMetadata(),
-      PopulateInfoSchemaColumnsMetadataForIndex());
+      PopulateInfoSchemaColumnsMetadata(*runfiles),
+      PopulateInfoSchemaColumnsMetadataForIndex(*runfiles));
 
   return 0;
 }
