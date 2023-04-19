@@ -112,6 +112,7 @@ def generate_javacc_parser(name, srcs, parser_class_name, extra_deps, extra_head
         ] + extra_headers,
         copts = [
             "-funsigned-char",
+            "-iquote .",
         ],
         deps = [
             "@com_google_zetasql//zetasql/base",
