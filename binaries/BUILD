@@ -39,5 +39,8 @@ go_binary(
     data = [
         ":emulator_main",
     ],
+    env = {
+        "GOLANG_PROTOBUF_REGISTRATION_CONFLICT": "ignore",
+    },
     deps = ["//gateway"],
 )
